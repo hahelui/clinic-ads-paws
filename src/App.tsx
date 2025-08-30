@@ -1,10 +1,14 @@
 // App.tsx - Main application layout with sidebar
-import { PawPrintIcon, PlusIcon } from "lucide-react"
-import { useState } from "react"
+import { PawPrintIcon } from "lucide-react"
+import { useState, useEffect } from "react"
 
 import { AdForm } from "@/components/ad-creator/ad-form"
+import { getAd } from "@/lib/storage"
+import type { AdFormData } from "@/components/ad-creator/ad-form"
+import { HomePage } from "@/components/home/home-page"
 import { Navigation } from "@/components/navigation"
 import { PhotosPage } from "@/components/photos/photos-page"
+import { SettingsPage } from "@/components/settings/settings-page"
 import { Button } from "@/components/ui/button"
 import {
   SidebarProvider,
@@ -19,6 +23,35 @@ import {
 function App() {
   const [showAdCreator, setShowAdCreator] = useState(false)
   const [activePage, setActivePage] = useState<"home" | "photos" | "settings">("home")
+  const [currentAdId, setCurrentAdId] = useState<string | null>(null)
+  const [adFormData, setAdFormData] = useState<AdFormData | null>(null)
+  const [isLoadingAdData, setIsLoadingAdData] = useState(false)
+  
+  // Load ad data when editing
+  useEffect(() => {
+    // Reset form data when changing ads to avoid stale data
+    setAdFormData(null)
+    
+    const loadAdData = async () => {
+      if (currentAdId) {
+        try {
+          setIsLoadingAdData(true)
+          const ad = await getAd(currentAdId)
+          if (ad) {
+            // Keep the id but remove other metadata properties before passing to form
+            const { createdAt, updatedAt, ...formDataWithId } = ad
+            setAdFormData(formDataWithId as AdFormData & { id: string })
+          }
+        } catch (error) {
+          console.error("Failed to load ad data:", error)
+        } finally {
+          setIsLoadingAdData(false)
+        }
+      }
+    }
+    
+    loadAdData()
+  }, [currentAdId])
   
   return (
     <SidebarProvider>
@@ -46,14 +79,15 @@ function App() {
                 <SidebarTrigger />
                 <h1 className="text-lg font-semibold">Clinic Ads</h1>
               </div>
-
             </header>
             <main className="flex-1 overflow-auto p-4">
               <div className="mx-auto max-w-5xl">
                 {showAdCreator ? (
                   <div className="bg-white rounded-lg shadow">
                     <div className="border-b p-4 flex items-center justify-between">
-                      <h2 className="text-xl font-semibold">Créer une nouvelle annonce</h2>
+                      <h2 className="text-xl font-semibold">
+                        {currentAdId ? "Modifier l'annonce" : "Créer une nouvelle annonce"}
+                      </h2>
                       <Button 
                         variant="ghost" 
                         size="sm" 
@@ -63,30 +97,45 @@ function App() {
                       </Button>
                     </div>
                     <div className="p-6">
-                      <AdForm />
+                      {isLoadingAdData ? (
+                        <div className="flex justify-center items-center p-12">
+                          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                        </div>
+                      ) : (
+                        <AdForm 
+                          initialData={adFormData} 
+                          onSaveSuccess={() => {
+                            setShowAdCreator(false)
+                            setActivePage("home")
+                          }}
+                        />
+                      )}
                     </div>
                   </div>
                 ) : activePage === "photos" ? (
                   <PhotosPage />
                 ) : activePage === "settings" ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <p className="text-lg text-muted-foreground mb-4">Paramètres (à venir)</p>
-                    </div>
-                  </div>
+                  <SettingsPage />
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center">
-                      <p className="text-lg text-muted-foreground mb-4">Bienvenue sur Clinic Ads</p>
-                      <Button 
-                        onClick={() => setShowAdCreator(true)}
-                        className="flex items-center gap-1"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                        Créer une nouvelle annonce
-                      </Button>
-                    </div>
-                  </div>
+                  <HomePage 
+                    onCreateAd={() => {
+                      setCurrentAdId(null)
+                      setAdFormData(null)
+                      setShowAdCreator(true)
+                    }} 
+                    onEditAd={(adId) => {
+                      setCurrentAdId(adId)
+                      setShowAdCreator(true)
+                    }}
+                    onDeleteAd={(adId) => {
+                      // If we're currently editing this ad and it's deleted, close the editor
+                      if (currentAdId === adId && showAdCreator) {
+                        setShowAdCreator(false)
+                        setCurrentAdId(null)
+                        setAdFormData(null)
+                      }
+                    }}
+                  />
                 )}
               </div>
             </main>

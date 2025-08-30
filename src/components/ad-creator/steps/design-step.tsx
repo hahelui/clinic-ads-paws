@@ -1,9 +1,11 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Button } from "@/components/ui/button"
+import { ImageIcon } from "lucide-react"
 import type { AdFormData } from "../ad-form"
+import { ImageSelectionDialog } from "../image-selection-dialog"
 
 interface DesignStepProps {
   formData: AdFormData
@@ -12,21 +14,32 @@ interface DesignStepProps {
 
 export function DesignStep({ formData, updateFormData }: DesignStepProps) {
   const [useHeader, setUseHeader] = useState(!!formData.header)
-  const [useBackground, setUseBackground] = useState(!!formData.backgroundImage)
+  const [useBackground, setUseBackground] = useState(!!formData.background)
   const [useContactInfo, setUseContactInfo] = useState(!!formData.contactInfo)
+  const [headerName, setHeaderName] = useState<string>("") 
+  const [backgroundName, setBackgroundName] = useState<string>("") 
+  const [isHeaderDialogOpen, setIsHeaderDialogOpen] = useState(false)
+  const [isBackgroundDialogOpen, setIsBackgroundDialogOpen] = useState(false)
 
-  // Mock data for headers and backgrounds - will be replaced with actual data later
-  const headers = [
-    { id: "header1", name: "En-tête standard" },
-    { id: "header2", name: "En-tête moderne" },
-    { id: "header3", name: "En-tête classique" },
-  ]
-
-  const backgrounds = [
-    { id: "bg1", name: "Fond blanc" },
-    { id: "bg2", name: "Fond bleu clair" },
-    { id: "bg3", name: "Fond motif médical" },
-  ]
+  // Set initial names if editing an existing ad
+  useEffect(() => {
+    // Reset the state when form data changes
+    setUseHeader(!!formData.header)
+    setUseBackground(!!formData.background)
+    setUseContactInfo(!!formData.contactInfo)
+    
+    if (formData.header) {
+      setHeaderName("Image sélectionnée")
+    } else {
+      setHeaderName("")
+    }
+    
+    if (formData.background) {
+      setBackgroundName("Image sélectionnée")
+    } else {
+      setBackgroundName("")
+    }
+  }, [formData])
 
   return (
     <div className="space-y-6">
@@ -50,25 +63,44 @@ export function DesignStep({ formData, updateFormData }: DesignStepProps) {
         </div>
 
         {useHeader && (
-          <RadioGroup
-            value={formData.header || ""}
-            onValueChange={(value: string) => updateFormData({ header: value })}
-            className="grid grid-cols-3 gap-4 mt-2"
-          >
-            {headers.map((header) => (
-              <div key={header.id} className="flex flex-col items-center">
-                <div className="border rounded-md p-2 w-full h-16 flex items-center justify-center mb-2">
-                  {/* Placeholder for header preview */}
-                  <div className="w-full h-8 bg-gray-200 rounded"></div>
+          <div className="mt-4">
+            <div className="flex gap-4 items-center">
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => setIsHeaderDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Choisir une image
+              </Button>
+              
+              {formData.header && (
+                <div className="flex items-center gap-2">
+                  <div className="border rounded-md overflow-hidden w-12 h-12">
+                    <img 
+                      src={formData.header} 
+                      alt="En-tête sélectionné" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm">{headerName}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={header.id} id={header.id} />
-                  <Label htmlFor={header.id}>{header.name}</Label>
-                </div>
-              </div>
-            ))}
-          </RadioGroup>
+              )}
+            </div>
+          </div>
         )}
+        
+        <ImageSelectionDialog
+          open={isHeaderDialogOpen}
+          onOpenChange={setIsHeaderDialogOpen}
+          onSelect={(imageUrl, imageName) => {
+            updateFormData({ header: imageUrl })
+            setHeaderName(imageName)
+          }}
+          type="header"
+          title="Sélectionner un en-tête"
+        />
       </div>
 
       {/* Background selection */}
@@ -85,35 +117,50 @@ export function DesignStep({ formData, updateFormData }: DesignStepProps) {
             checked={useBackground}
             onCheckedChange={(checked) => {
               setUseBackground(checked)
-              if (!checked) updateFormData({ backgroundImage: null })
+              if (!checked) updateFormData({ background: null })
             }}
           />
         </div>
 
         {useBackground && (
-          <RadioGroup
-            value={formData.backgroundImage || ""}
-            onValueChange={(value: string) => updateFormData({ backgroundImage: value })}
-            className="grid grid-cols-3 gap-4 mt-2"
-          >
-            {backgrounds.map((bg) => (
-              <div key={bg.id} className="flex flex-col items-center">
-                <div className="border rounded-md p-2 w-full h-24 flex items-center justify-center mb-2">
-                  {/* Placeholder for background preview */}
-                  <div className={`w-full h-full rounded ${
-                    bg.id === "bg1" ? "bg-white" : 
-                    bg.id === "bg2" ? "bg-blue-100" : 
-                    "bg-gray-100"
-                  }`}></div>
+          <div className="mt-4">
+            <div className="flex gap-4 items-center">
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => setIsBackgroundDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Choisir une image
+              </Button>
+              
+              {formData.background && (
+                <div className="flex items-center gap-2">
+                  <div className="border rounded-md overflow-hidden w-12 h-12">
+                    <img 
+                      src={formData.background} 
+                      alt="Arrière-plan sélectionné" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm">{backgroundName}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value={bg.id} id={bg.id} />
-                  <Label htmlFor={bg.id}>{bg.name}</Label>
-                </div>
-              </div>
-            ))}
-          </RadioGroup>
+              )}
+            </div>
+          </div>
         )}
+        
+        <ImageSelectionDialog
+          open={isBackgroundDialogOpen}
+          onOpenChange={setIsBackgroundDialogOpen}
+          onSelect={(imageUrl, imageName) => {
+            updateFormData({ background: imageUrl })
+            setBackgroundName(imageName)
+          }}
+          type="background"
+          title="Sélectionner un arrière-plan"
+        />
       </div>
 
       {/* Contact info */}

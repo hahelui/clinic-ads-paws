@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { toast } from "sonner"
 import { saveAd } from "@/lib/storage"
 
 import {
@@ -16,29 +17,76 @@ import { FrenchTextStep } from "./steps/french-text-step"
 import { ArabicTextStep } from "./steps/arabic-text-step"
 import { DesignStep } from "./steps/design-step"
 
+export interface AdFormProps {
+  initialData?: AdFormData & { id?: string } | null
+  onSaveSuccess?: (adId: string) => void
+}
+
 export type AdFormData = {
+  title: string
   language: "french" | "arabic" | "both"
   useAi: boolean
   aiPrompt: string
   frenchText: string
   arabicText: string
   header: string | null
-  backgroundImage: string | null
+  background: string | null
   contactInfo: string
+  previewImage?: string | null
 }
 
-export function AdForm() {
+export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState<AdFormData>({
+  
+  // Default form data
+  const defaultFormData: AdFormData = {
+    title: "",
     language: "both",
     useAi: true,
     aiPrompt: "",
     frenchText: "",
     arabicText: "",
     header: null,
-    backgroundImage: null,
+    background: null,
     contactInfo: "",
-  })
+  }
+  
+  // Initialize with default form data
+  const [formData, setFormData] = useState<AdFormData>(defaultFormData)
+  
+  // Update form data when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      // Make sure to extract only the properties we need for AdFormData
+      const {
+        title = "",
+        language = "both",
+        useAi = true,
+        aiPrompt = "",
+        frenchText = "",
+        arabicText = "",
+        header = null,
+        background = null,
+        contactInfo = "",
+        previewImage = null
+      } = initialData;
+      
+      setFormData({
+        title,
+        language: language as "french" | "arabic" | "both",
+        useAi,
+        aiPrompt,
+        frenchText,
+        arabicText,
+        header,
+        background,
+        contactInfo,
+        previewImage
+      });
+    } else {
+      setFormData(defaultFormData);
+    }
+  }, [initialData])
 
   const updateFormData = (data: Partial<AdFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))
@@ -52,32 +100,48 @@ export function AdForm() {
     setCurrentStep((prev) => Math.max(prev - 1, 0))
   }
   
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Image generation and download will be handled in the home page
+
   const handleSubmit = async () => {
+    setIsSaving(true)
     try {
-      // Save the form data to IndexedDB
-      const adId = await saveAd(formData)
+      // No need to generate image in the form
+      
+      // Save the form data to IndexedDB (pass the ID if editing)
+      const adId = await saveAd(formData, initialData?.id)
       console.log("Ad saved with ID:", adId)
       
-      // Reset the form after successful save
-      setFormData({
-        language: "both",
-        useAi: true,
-        aiPrompt: "",
-        frenchText: "",
-        arabicText: "",
-        header: null,
-        backgroundImage: null,
-        contactInfo: "",
-      })
+      // Call the onSaveSuccess callback if provided
+      if (onSaveSuccess) {
+        onSaveSuccess(adId)
+      } else {
+        // Reset the form after successful save
+        setFormData({
+          title: "",
+          language: "both",
+          useAi: true,
+          aiPrompt: "",
+          frenchText: "",
+          arabicText: "",
+          header: null,
+          background: null,
+          contactInfo: "",
+          previewImage: null
+        })
+      }
       
       // Return to the first step
       setCurrentStep(0)
       
-      // Alert the user that the ad was saved successfully
-      alert("Annonce enregistrée avec succès!")
+      // Notify the user that the ad was saved successfully
+      toast.success(initialData ? "Annonce mise à jour avec succès" : "Annonce enregistrée avec succès")
     } catch (error) {
       console.error("Failed to save ad:", error)
-      alert("Erreur lors de l'enregistrement de l'annonce. Veuillez réessayer.")
+      toast.error("Erreur lors de l'enregistrement de l'annonce")
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -149,8 +213,10 @@ export function AdForm() {
         ))}
       </Stepper>
 
-      <div className="border rounded-lg p-6 mb-6">
-        {activeSteps[currentStep]?.component}
+      <div className="mb-6">
+        <div className="border rounded-lg p-6">
+          {activeSteps[currentStep]?.component}
+        </div>
       </div>
 
       <div className="flex justify-between">
@@ -161,11 +227,18 @@ export function AdForm() {
         >
           Précédent
         </Button>
-        <Button
-          onClick={currentStep === activeSteps.length - 1 ? handleSubmit : handleNext}
-        >
-          {currentStep === activeSteps.length - 1 ? "Valider" : "Suivant"}
-        </Button>
+        <div className="flex gap-2">
+          {currentStep === activeSteps.length - 1 ? (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSaving}
+            >
+              {isSaving ? "Enregistrement..." : initialData ? "Mettre à jour" : "Enregistrer"}
+            </Button>
+          ) : (
+            <Button onClick={handleNext}>Suivant</Button>
+          )}
+        </div>
       </div>
     </div>
   )

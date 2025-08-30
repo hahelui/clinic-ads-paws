@@ -1,6 +1,14 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
+import { openDB } from 'idb';
+import type { DBSchema, IDBPDatabase } from 'idb';
 import type { Photo, PhotoType } from '@/components/photos/photos-page';
 import type { AdFormData } from '@/components/ad-creator/ad-form';
+
+// Settings interface
+export interface AppSettings {
+  apiKey?: string;
+  systemPrompt?: string;
+  id?: string; // Add id to the interface
+}
 
 // Define our database schema
 interface ClinicAdsDB extends DBSchema {
@@ -15,10 +23,14 @@ interface ClinicAdsDB extends DBSchema {
     key: string;
     value: AdFormData & { id: string; createdAt: number; updatedAt: number };
   };
+  settings: {
+    key: string;
+    value: AppSettings;
+  };
 }
 
 // Database version
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 // Database name
 const DB_NAME = 'clinic-ads-db';
@@ -26,7 +38,7 @@ const DB_NAME = 'clinic-ads-db';
 // Initialize the database
 async function initDB(): Promise<IDBPDatabase<ClinicAdsDB>> {
   return openDB<ClinicAdsDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       // Create a store for photos
       if (!db.objectStoreNames.contains('photos')) {
         const photoStore = db.createObjectStore('photos', { keyPath: 'id' });
@@ -36,6 +48,13 @@ async function initDB(): Promise<IDBPDatabase<ClinicAdsDB>> {
       // Create a store for ads
       if (!db.objectStoreNames.contains('ads')) {
         db.createObjectStore('ads', { keyPath: 'id' });
+      }
+      
+      // Create a store for settings (added in version 2)
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('settings')) {
+          db.createObjectStore('settings', { keyPath: 'id' });
+        }
       }
     },
   });
@@ -69,21 +88,34 @@ export async function deletePhoto(id: string): Promise<void> {
 }
 
 // Ad storage operations
-export async function saveAd(
-  ad: AdFormData & { id?: string }
-): Promise<string> {
+export async function saveAd(adData: AdFormData, existingId?: string): Promise<string> {
   const db = await initDB();
-  const now = Date.now();
+  const timestamp = Date.now();
+  const id = existingId || crypto.randomUUID();
   
-  const adToSave = {
-    ...ad,
-    id: ad.id || `ad-${now}`,
-    createdAt: ad.id ? (await db.get('ads', ad.id))?.createdAt || now : now,
-    updatedAt: now,
-  };
+  let adWithMetadata;
   
-  await db.put('ads', adToSave);
-  return adToSave.id;
+  if (existingId) {
+    // If updating an existing ad, preserve the original createdAt timestamp
+    const existingAd = await db.get('ads', existingId);
+    adWithMetadata = {
+      ...adData,
+      id,
+      createdAt: existingAd?.createdAt || timestamp,
+      updatedAt: timestamp,
+    };
+  } else {
+    // New ad
+    adWithMetadata = {
+      ...adData,
+      id,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  }
+  
+  await db.put('ads', adWithMetadata);
+  return id;
 }
 
 export async function getAd(id: string): Promise<(AdFormData & { id: string; createdAt: number; updatedAt: number }) | undefined> {
@@ -141,4 +173,16 @@ export async function importData(jsonData: string): Promise<void> {
     console.error('Failed to import data:', error);
     throw new Error('Failed to import data. The file might be corrupted.');
   }
+}
+
+// Settings storage operations
+export async function saveSettings(settings: AppSettings): Promise<void> {
+  const db = await initDB();
+  await db.put('settings', { id: 'app-settings', ...settings });
+}
+
+export async function getSettings(): Promise<AppSettings> {
+  const db = await initDB();
+  const settings = await db.get('settings', 'app-settings');
+  return settings || { apiKey: '', systemPrompt: '' };
 }

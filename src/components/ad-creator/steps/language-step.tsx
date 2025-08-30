@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
 import type { AdFormData } from "../ad-form"
 
 interface LanguageStepProps {
@@ -11,7 +12,20 @@ interface LanguageStepProps {
 export function LanguageStep({ formData, updateFormData }: LanguageStepProps) {
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="ad-title" className="text-base font-medium">Titre de l'annonce</Label>
+          <Input
+            id="ad-title"
+            value={formData.title}
+            onChange={(e) => updateFormData({ title: e.target.value })}
+            placeholder="Entrez un titre pour identifier cette annonce"
+            className="mt-1.5"
+          />
+        </div>
+      </div>
+      
+      <div className="border-t pt-6">
         <h3 className="text-lg font-medium mb-4">Langue de l'annonce</h3>
         <RadioGroup
           value={formData.language}

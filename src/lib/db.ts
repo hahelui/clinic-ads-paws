@@ -1,4 +1,4 @@
-import Dexie, { Table } from 'dexie'
+import Dexie, { type Table } from 'dexie'
 import { v4 as uuidv4 } from 'uuid'
 
 // Core types

@@ -36,7 +36,7 @@ export const AdPreview = forwardRef<HTMLDivElement, AdPreviewProps>((
             backgroundImage: `url(${adData.background})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            opacity: 0.35,
+            opacity: 0.2,
           }}
         />
       )}
@@ -55,7 +55,7 @@ export const AdPreview = forwardRef<HTMLDivElement, AdPreviewProps>((
         )}
 
         {/* Content area */}
-        <div className="flex-1 p-4 flex flex-col">
+        <div className="flex-1 px-6 py-4 flex flex-col">
 
 
           {/* Arabic text - if applicable */}
@@ -83,9 +83,9 @@ export const AdPreview = forwardRef<HTMLDivElement, AdPreviewProps>((
             </div>
           )}
 
-          {/* Contact info at the bottom */}
+          {/* Contact info at the bottom left */}
           {adData.contactInfo && (
-            <div className="mt-auto text-center text-sm">
+            <div className="mt-auto text-sm text-left pt-4">
               {adData.contactInfo}
             </div>
           )}
@@ -98,18 +98,22 @@ export const AdPreview = forwardRef<HTMLDivElement, AdPreviewProps>((
 // Function to generate an image from the ad preview using pure canvas rendering
 export async function generateAdImage(adData: AdFormData): Promise<string> {
   try {
-    // Create a canvas element
+    // Create a high-resolution canvas element
     const canvas = document.createElement('canvas')
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) {
       throw new Error('Could not get canvas context')
     }
     
-    // Set canvas dimensions
-    const width = 600
-    const height = 800
+    // Set canvas dimensions with higher resolution
+    const width = 1200
+    const height = 1600
     canvas.width = width
     canvas.height = height
+    
+    // Enable image smoothing for better quality
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
     
     // Fill background with white
     ctx.fillStyle = '#ffffff'
@@ -119,9 +123,15 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
     if (adData.background) {
       const bgImg = await loadImage(adData.background)
       
+      // Calculate dimensions for background image (60% of width, centered)
+      const bgWidth = width * 0.6 // 60% of ad width
+      const bgHeight = (bgImg.height / bgImg.width) * bgWidth // Preserve aspect ratio
+      const bgX = (width - bgWidth) / 2 // Center horizontally
+      const bgY = (height - bgHeight) / 2 // Center vertically
+      
       // Draw with opacity
-      ctx.globalAlpha = 0.35
-      drawImageCovered(ctx, bgImg, 0, 0, width, height)
+      ctx.globalAlpha = 0.2
+      ctx.drawImage(bgImg, bgX, bgY, bgWidth, bgHeight)
       ctx.globalAlpha = 1.0
     }
     
@@ -139,48 +149,98 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
     }
     
     // Content area padding
-    const padding = 16
+    const padding = 32 // Doubled padding for higher resolution
     yOffset += padding
     
     // Draw Arabic text if applicable
     if (adData.language !== "french" && adData.arabicText) {
       ctx.fillStyle = '#000000'
-      ctx.font = '18px Arial'
-      ctx.textAlign = 'right'
+      const textPadding = 60 // 30px padding * 2 for higher resolution
+      const maxWidth = width - (textPadding * 2)
       
-      const lines = adData.arabicText.split('\n')
-      lines.forEach((line: string) => {
-        ctx.fillText(line, width - padding, yOffset + 18)
-        yOffset += 26 // Line height + margin
+      // Draw Arabic title
+      ctx.font = '44px Arial, sans-serif' // Bigger font for title
+      ctx.textAlign = 'center' // Center align the title
+      ctx.fillText('إعلان للجمهور', width / 2, yOffset + 44)
+      yOffset += 70 // Add space after title
+      
+      // Draw Arabic content
+      ctx.font = '36px Arial' // Regular font for content
+      ctx.textAlign = 'right' // Right align for Arabic text
+      
+      // Set RTL text direction for Arabic if supported by the browser
+      if ('direction' in ctx) {
+        ctx.direction = 'rtl'
+      }
+      
+      // Process each paragraph (separated by newlines)
+      const paragraphs = adData.arabicText.split('\n')
+      paragraphs.forEach((paragraph: string) => {
+        // Wrap text within the available width
+        const wrappedLines = wrapText(ctx, paragraph, maxWidth, true)
+        
+        // Draw each wrapped line
+        wrappedLines.forEach((line: string) => {
+          // For RTL text, we need to draw at the right edge minus padding
+          ctx.fillText(line, width - textPadding, yOffset + 36)
+          yOffset += 52 // Doubled line height + margin
+        })
+        
+        yOffset += 20 // Extra margin between paragraphs
       })
       
-      yOffset += 10 // Extra margin between text blocks
+      yOffset += 20 // Extra margin between text blocks
     }
     
     // Draw French text if applicable
     if (adData.language !== "arabic" && adData.frenchText) {
+      // Reset direction to LTR for French text
+      if ('direction' in ctx) {
+        ctx.direction = 'ltr'
+      }
       ctx.fillStyle = '#000000'
-      ctx.font = '16px Arial'
-      ctx.textAlign = 'left'
+      const textPadding = 60 // 30px padding * 2 for higher resolution
+      const maxWidth = width - (textPadding * 2)
       
-      const lines = adData.frenchText.split('\n')
-      lines.forEach((line: string) => {
-        ctx.fillText(line, padding, yOffset + 16)
-        yOffset += 24 // Line height + margin
+      // Draw French title
+      ctx.font = '40px Arial, sans-serif' // Bigger font for title
+      ctx.textAlign = 'center' // Center align the title
+      ctx.fillText('Note d\'information', width / 2, yOffset + 40)
+      yOffset += 64 // Add space after title
+      
+      // Draw French content
+      ctx.font = '32px Arial' // Regular font for content
+      ctx.textAlign = 'left' // Left align for French text
+      
+      // Process each paragraph (separated by newlines)
+      const paragraphs = adData.frenchText.split('\n')
+      paragraphs.forEach((paragraph: string) => {
+        // Wrap text within the available width
+        const wrappedLines = wrapText(ctx, paragraph, maxWidth, false)
+        
+        // Draw each wrapped line
+        wrappedLines.forEach((line: string) => {
+          ctx.fillText(line, textPadding, yOffset + 32)
+          yOffset += 48 // Doubled line height + margin
+        })
+        
+        yOffset += 20 // Extra margin between paragraphs
       })
       
-      yOffset += 10 // Extra margin between text blocks
+      yOffset += 20 // Extra margin between text blocks
     }
     
     // Draw contact info if exists
     if (adData.contactInfo) {
       ctx.fillStyle = '#000000'
-      ctx.font = '14px Arial'
-      ctx.textAlign = 'center'
-      ctx.fillText(adData.contactInfo, width / 2, height - padding - 14)
+      ctx.font = '32px Arial' // Doubled font size for higher resolution
+      ctx.textAlign = 'left'
+      const textPadding = 60 // 30px padding * 2 for higher resolution
+      ctx.fillText(adData.contactInfo, textPadding, height - padding - 28)
     }
     
-    return canvas.toDataURL('image/png')
+    // Use higher quality settings for the PNG export
+    return canvas.toDataURL('image/png', 1.0)
   } catch (error) {
     console.error("Error generating image:", error)
     return adData.header || 'placeholder-image-url'
@@ -198,38 +258,80 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   })
 }
 
-// Helper function to draw an image covering the target area (like background-size: cover)
-function drawImageCovered(
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  x: number,
-  y: number,
-  w: number,
-  h: number
-): void {
-  const imgRatio = img.width / img.height
-  const targetRatio = w / h
-  
-  let drawWidth = w
-  let drawHeight = h
-  let offsetX = 0
-  let offsetY = 0
-  
-  // Calculate dimensions to cover the area while maintaining aspect ratio
-  if (imgRatio > targetRatio) {
-    // Image is wider than target area
-    drawHeight = h
-    drawWidth = h * imgRatio
-    offsetX = (w - drawWidth) / 2
+// Helper function to wrap text within a specified width
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, isRTL: boolean): string[] {
+  // For RTL languages like Arabic, we need a different approach
+  if (isRTL) {
+    return wrapRTLText(ctx, text, maxWidth)
   } else {
-    // Image is taller than target area
-    drawWidth = w
-    drawHeight = w / imgRatio
-    offsetY = (h - drawHeight) / 2
+    return wrapLTRText(ctx, text, maxWidth)
+  }
+}
+
+// Helper function for wrapping left-to-right text (e.g., French)
+function wrapLTRText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(' ')
+  const lines: string[] = []
+  let currentLine = words[0]
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i]
+    const testLine = currentLine + ' ' + word
+    const metrics = ctx.measureText(testLine)
+    const testWidth = metrics.width
+
+    if (testWidth > maxWidth) {
+      lines.push(currentLine)
+      currentLine = word
+    } else {
+      currentLine = testLine
+    }
   }
   
-  ctx.drawImage(img, x + offsetX, y + offsetY, drawWidth, drawHeight)
+  lines.push(currentLine)
+  return lines
 }
+
+// Helper function for wrapping right-to-left text (e.g., Arabic)
+function wrapRTLText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  // For RTL text, we need to handle words in reverse order for proper line breaking
+  // but maintain the original word order within each line
+  const words = text.split(' ')
+  const lines: string[] = []
+  
+  // Start with an empty line
+  let currentLineWords: string[] = []
+  let currentWidth = 0
+  
+  // Process each word
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i]
+    // Add space width except for first word in a line
+    const spaceWidth = currentLineWords.length > 0 ? ctx.measureText(' ').width : 0
+    const wordWidth = ctx.measureText(word).width
+    
+    if (currentWidth + spaceWidth + wordWidth <= maxWidth || currentLineWords.length === 0) {
+      // Word fits on current line
+      currentLineWords.push(word)
+      currentWidth += spaceWidth + wordWidth
+    } else {
+      // Word doesn't fit, start a new line
+      // For RTL, we join with spaces but don't reverse the words
+      // The browser/canvas will handle the RTL display
+      lines.push(currentLineWords.join(' '))
+      currentLineWords = [word]
+      currentWidth = wordWidth
+    }
+  }
+  
+  // Add the last line if not empty
+  if (currentLineWords.length > 0) {
+    lines.push(currentLineWords.join(' '))
+  }
+  
+  return lines
+}
+
 
 // Function to download the generated image
 export async function downloadAdImage(adData: AdFormData): Promise<void> {

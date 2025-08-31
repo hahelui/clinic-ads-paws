@@ -7,19 +7,28 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Loader2Icon, SaveIcon, DownloadIcon, UploadIcon, TrashIcon } from "lucide-react"
 import { getSettings, saveSettings, exportData, importData } from "@/lib/storage"
+import { Combobox } from "@/components/ui/combobox"
+import type { ComboboxItem } from "@/components/ui/combobox"
+import { fetchModels } from "@/lib/ai"
+import type { AIModel } from "@/lib/ai"
 import type { AppSettings } from "@/lib/storage"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
 
 export function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>({
     apiKey: "",
-    systemPrompt: ""
+    endpoint: "",
+    systemPrompt: "",
+    model: ""
   })
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [isClearing, setIsClearing] = useState(false)
+  const [models, setModels] = useState<ComboboxItem[]>([])
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [modelError, setModelError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Load settings on component mount
@@ -38,6 +47,38 @@ export function SettingsPage() {
 
     loadSettings()
   }, [])
+  
+  // Load models when endpoint and API key are set
+  useEffect(() => {
+    const loadModels = async () => {
+      if (!settings.endpoint || !settings.apiKey) {
+        // Don't try to load models if we don't have endpoint and API key
+        return
+      }
+      
+      setIsLoadingModels(true)
+      setModelError(null)
+      
+      try {
+        const modelsList = await fetchModels()
+        const modelItems: ComboboxItem[] = modelsList.map((model: AIModel) => ({
+          value: model.id,
+          label: `${model.id}${model.owned_by ? ` (${model.owned_by})` : ''}`
+        }))
+        
+        setModels(modelItems)
+      } catch (error) {
+        console.error("Failed to load models:", error)
+        setModelError("Impossible de charger les modèles. Vérifiez votre clé API et endpoint.")
+        // Set empty models list when API fetch fails
+        setModels([])
+      } finally {
+        setIsLoadingModels(false)
+      }
+    }
+    
+    loadModels()
+  }, [settings.endpoint, settings.apiKey])
 
   const handleSave = async () => {
     try {
@@ -212,29 +253,64 @@ export function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="apiKey">Clé API</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              placeholder="Entrez votre clé API"
-              value={settings.apiKey}
-              onChange={(e) =>
-                setSettings({ ...settings, apiKey: e.target.value })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="systemPrompt">Prompt système</Label>
-            <Textarea
-              id="systemPrompt"
-              placeholder="Entrez le prompt système pour l'IA"
-              value={settings.systemPrompt}
-              onChange={(e) =>
-                setSettings({ ...settings, systemPrompt: e.target.value })
-              }
-              className="min-h-[100px]"
-            />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="apiKey">Clé API</Label>
+              <Input
+                id="apiKey"
+                type="password"
+                placeholder="Entrez votre clé API"
+                value={settings.apiKey || ""}
+                onChange={(e) => setSettings({ ...settings, apiKey: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="endpoint">Endpoint API</Label>
+              <Input
+                id="endpoint"
+                placeholder="api.exemple.ai/v1"
+                value={settings.endpoint || ""}
+                onChange={(e) => setSettings({ ...settings, endpoint: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="model">Modèle IA</Label>
+              {modelError && (
+                <p className="text-sm text-destructive mb-2">{modelError}</p>
+              )}
+              {isLoadingModels && (
+                <div className="flex items-center space-x-2 mb-2">
+                  <Loader2Icon className="h-4 w-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Chargement des modèles...</span>
+                </div>
+              )}
+              <Combobox
+                items={models}
+                value={settings.model || ""}
+                onChange={(value) => setSettings({ ...settings, model: value })}
+                placeholder="Sélectionner un modèle..."
+                searchPlaceholder="Rechercher un modèle..."
+                emptyMessage="Aucun modèle trouvé."
+                className="w-full"
+                disabled={isLoading}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="systemPrompt">Prompt système</Label>
+              <Textarea
+                id="systemPrompt"
+                placeholder="Entrez votre prompt système"
+                value={settings.systemPrompt || ""}
+                onChange={(e) => setSettings({ ...settings, systemPrompt: e.target.value })}
+                className="min-h-[100px]"
+                disabled={isLoading}
+              />
+            </div>
           </div>
         </CardContent>
         <CardFooter>

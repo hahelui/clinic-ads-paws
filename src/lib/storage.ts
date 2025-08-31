@@ -6,7 +6,9 @@ import type { AdFormData } from '@/components/ad-creator/ad-form';
 // Settings interface
 export interface AppSettings {
   apiKey?: string;
+  endpoint?: string;
   systemPrompt?: string;
+  model?: string;
   id?: string; // Add id to the interface
 }
 

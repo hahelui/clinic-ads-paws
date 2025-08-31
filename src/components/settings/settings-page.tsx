@@ -444,15 +444,15 @@ export function SettingsPage() {
         <CardHeader>
           <CardTitle>À propos</CardTitle>
           <CardDescription>
-            Informations sur l'application.
+            C'ette application permet de créer des annonces generlemment Faite par Hachem pour aider son Père dans son activité .
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p>
-            <strong>Clinic Ads Creator</strong> - Version 1.0.0
+            <strong>Create Ads</strong> - Version 1.0.0
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Développé par l'équipe Clinic Ads
+            Développé par Che Hachem Said - 2025
           </p>
         </CardContent>
       </Card>

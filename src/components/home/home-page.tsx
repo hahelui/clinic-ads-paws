@@ -27,15 +27,17 @@ interface HomePageProps {
   onCreateAd: () => void
   onEditAd: (adId: string) => void
   onDeleteAd?: (adId: string) => void
+  refreshTrigger?: number
 }
 
-export function HomePage({ onCreateAd, onEditAd, onDeleteAd }: HomePageProps) {
+export function HomePage({ onCreateAd, onEditAd, onDeleteAd, refreshTrigger = 0 }: HomePageProps) {
   const [ads, setAds] = useState<AdWithId[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const loadAds = async () => {
       try {
+        setIsLoading(true)
         const allAds = await getAllAds()
         setAds(allAds)
       } catch (error) {
@@ -46,7 +48,7 @@ export function HomePage({ onCreateAd, onEditAd, onDeleteAd }: HomePageProps) {
     }
 
     loadAds()
-  }, [])
+  }, [refreshTrigger])
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)

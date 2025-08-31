@@ -1,5 +1,5 @@
 // App.tsx - Main application layout with sidebar
-import { PawPrintIcon } from "lucide-react"
+import { Loader2Icon, PawPrintIcon } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { AdForm } from "@/components/ad-creator/ad-form"
@@ -26,7 +26,14 @@ function App() {
   const [currentAdId, setCurrentAdId] = useState<string | null>(null)
   const [adFormData, setAdFormData] = useState<AdFormData | null>(null)
   const [isLoadingAdData, setIsLoadingAdData] = useState(false)
+  // Add a refresh trigger to force reload of ad data
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   
+  // Function to refresh ad data after saving
+  const refreshAdData = () => {
+    setRefreshTrigger(prev => prev + 1)
+  }
+
   // Load ad data when editing
   useEffect(() => {
     // Reset form data when changing ads to avoid stale data
@@ -51,7 +58,7 @@ function App() {
     }
     
     loadAdData()
-  }, [currentAdId])
+  }, [currentAdId, refreshTrigger])
   
   return (
     <SidebarProvider>
@@ -60,7 +67,7 @@ function App() {
           <SidebarHeader>
             <div className="flex items-center gap-2 px-2">
               <PawPrintIcon className="h-6 w-6" />
-              <span className="font-semibold">Clinic Ads</span>
+              <span className="font-semibold">Create Ads</span>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -68,7 +75,7 @@ function App() {
           </SidebarContent>
           <SidebarFooter>
             <div className="px-2 text-xs text-muted-foreground">
-              Clinic Ads v0.1
+              Create Ads v1.0.0
             </div>
           </SidebarFooter>
         </Sidebar>
@@ -77,7 +84,7 @@ function App() {
             <header className="border-b bg-background px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <SidebarTrigger />
-                <h1 className="text-lg font-semibold">Clinic Ads</h1>
+                <h1 className="text-lg font-semibold">Create Ads</h1>
               </div>
             </header>
             <main className="flex-1 overflow-auto p-4">
@@ -98,16 +105,18 @@ function App() {
                     </div>
                     <div className="p-6">
                       {isLoadingAdData ? (
-                        <div className="flex justify-center items-center p-12">
-                          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                        <div className="flex items-center justify-center h-full">
+                          <Loader2Icon className="h-8 w-8 animate-spin" />
                         </div>
                       ) : (
                         <AdForm 
                           initialData={adFormData} 
                           onSaveSuccess={() => {
+                            // Refresh ad data after saving
+                            refreshAdData()
                             setShowAdCreator(false)
-                            setActivePage("home")
-                          }}
+                            setCurrentAdId(null)
+                          }} 
                         />
                       )}
                     </div>
@@ -118,6 +127,7 @@ function App() {
                   <SettingsPage />
                 ) : (
                   <HomePage 
+                    refreshTrigger={refreshTrigger}
                     onCreateAd={() => {
                       setCurrentAdId(null)
                       setAdFormData(null)
@@ -134,6 +144,8 @@ function App() {
                         setCurrentAdId(null)
                         setAdFormData(null)
                       }
+                      // Refresh the ad list after deletion
+                      refreshAdData()
                     }}
                   />
                 )}

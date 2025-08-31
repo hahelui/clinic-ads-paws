@@ -5,6 +5,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar
 } from "@/components/ui/sidebar"
 
 interface NavigationProps {
@@ -13,15 +14,27 @@ interface NavigationProps {
 }
 
 export function Navigation({ activePage, onNavigate }: NavigationProps) {
+  const { isMobile, setOpenMobile } = useSidebar()
+  
+  // Handler to navigate and close sidebar on mobile
+  const handleNavigate = (page: "home" | "photos" | "settings") => {
+    onNavigate(page)
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
+  
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <SidebarMenuButton 
           tooltip="Accueil" 
           isActive={activePage === "home"}
-          onClick={() => onNavigate("home")}
+          onClick={() => handleNavigate("home")}
+          size="lg" // Increased size
+          className="font-medium"
         >
-          <HomeIcon />
+          <HomeIcon className="h-5 w-5" />
           <span>Accueil</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -31,9 +44,11 @@ export function Navigation({ activePage, onNavigate }: NavigationProps) {
         <SidebarMenuButton 
           tooltip="Photos"
           isActive={activePage === "photos"}
-          onClick={() => onNavigate("photos")}
+          onClick={() => handleNavigate("photos")}
+          size="lg" // Increased size
+          className="font-medium"
         >
-          <ImageIcon />
+          <ImageIcon className="h-5 w-5" />
           <span>Photos</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -41,9 +56,11 @@ export function Navigation({ activePage, onNavigate }: NavigationProps) {
         <SidebarMenuButton 
           tooltip="Paramètres"
           isActive={activePage === "settings"}
-          onClick={() => onNavigate("settings")}
+          onClick={() => handleNavigate("settings")}
+          size="lg" // Increased size
+          className="font-medium"
         >
-          <SettingsIcon />
+          <SettingsIcon className="h-5 w-5" />
           <span>Paramètres</span>
         </SidebarMenuButton>
       </SidebarMenuItem>

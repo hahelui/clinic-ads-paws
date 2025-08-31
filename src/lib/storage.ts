@@ -137,10 +137,12 @@ export async function deleteAd(id: string): Promise<void> {
 export async function exportData(): Promise<string> {
   const photos = await getAllPhotos();
   const ads = await getAllAds();
+  const settings = await getSettings();
   
   const exportData = {
     photos,
     ads,
+    settings,
     exportDate: new Date().toISOString(),
   };
   
@@ -159,6 +161,12 @@ export async function importData(jsonData: string): Promise<void> {
     const adStore = db.transaction('ads', 'readwrite').objectStore('ads');
     await adStore.clear();
     
+    // Clear settings if present in import data
+    if (data.settings) {
+      const settingsStore = db.transaction('settings', 'readwrite').objectStore('settings');
+      await settingsStore.clear();
+    }
+    
     // Import photos
     const photoTx = db.transaction('photos', 'readwrite');
     await Promise.all(data.photos.map((photo: Photo) => photoTx.store.add(photo)));
@@ -168,6 +176,11 @@ export async function importData(jsonData: string): Promise<void> {
     const adTx = db.transaction('ads', 'readwrite');
     await Promise.all(data.ads.map((ad: any) => adTx.store.add(ad)));
     await adTx.done;
+    
+    // Import settings if present
+    if (data.settings) {
+      await saveSettings(data.settings);
+    }
     
   } catch (error) {
     console.error('Failed to import data:', error);

@@ -202,7 +202,7 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
         yOffset += 20 // Extra margin between paragraphs
       })
       
-      yOffset += 20 // Extra margin between text blocks
+      yOffset += 200 // Extra margin between text blocks
     }
     
     // Draw French text if applicable
@@ -246,7 +246,7 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
     // Draw contact info if exists
     if (adData.contactInfo) {
       ctx.fillStyle = '#000000'
-      ctx.font = '32px Arial' // Doubled font size for higher resolution
+      ctx.font = '32px Arial, sans-serif, Bold' // Doubled font size for higher resolution
       ctx.textAlign = 'left'
       const textPadding = 60 // 30px padding * 2 for higher resolution
       ctx.fillText(adData.contactInfo, textPadding, height - padding - 28)

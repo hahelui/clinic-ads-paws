@@ -135,22 +135,36 @@ export async function generateResponse(
 }
 
 /**
- * Extracts the text content from an AI response
+ * Extracts plain text from an AI response
  * @param response The AI response object
- * @returns The extracted text content
+ * @returns The extracted text as a string
  */
 export function extractResponseText(response: AIResponse): string {
-  if (!response.output || response.output.length === 0) {
+  try {
+    // Check if we have a valid response with output messages
+    if (!response || !response.output || !Array.isArray(response.output)) {
+      console.error('Invalid AI response format');
+      return '';
+    }
+    
+    // Find the first message with content (typically the assistant's message)
+    const message = response.output.find(msg => 
+      msg && msg.role === 'assistant' && msg.content && Array.isArray(msg.content) && msg.content.length > 0
+    );
+    
+    if (!message || !message.content || message.content.length === 0) {
+      console.error('No valid message found in AI response');
+      return '';
+    }
+    
+    // Extract text from all content parts
+    const textParts = message.content
+      .filter(part => part.type === 'text' && typeof part.text === 'string')
+      .map(part => part.text);
+    
+    return textParts.join('\n');
+  } catch (error) {
+    console.error('Error extracting text from AI response:', error);
     return '';
   }
-  
-  const message = response.output.find(msg => msg.role === 'assistant');
-  if (!message || !message.content || message.content.length === 0) {
-    return '';
-  }
-  
-  return message.content
-    .filter(content => content.type === 'output_text')
-    .map(content => content.text)
-    .join('');
 }

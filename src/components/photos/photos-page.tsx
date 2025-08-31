@@ -6,7 +6,7 @@ import { PhotoGrid } from "./photo-grid"
 import { UploadPhotoDialog } from "./upload-photo-dialog"
 import { getAllPhotos, getPhotosByType, savePhoto, deletePhoto } from "@/lib/storage"
 
-export type PhotoType = "header" | "background"
+export type PhotoType = "header" | "background" | "signature"
 
 export interface Photo {
   id: string
@@ -133,6 +133,7 @@ export function PhotosPage() {
   
   const headerPhotos = photos.filter(photo => photo.type === "header")
   const backgroundPhotos = photos.filter(photo => photo.type === "background")
+  const signaturePhotos = photos.filter(photo => photo.type === "signature")
 
   return (
     <div className="space-y-6">
@@ -148,9 +149,10 @@ export function PhotosPage() {
       </div>
 
       <Tabs defaultValue="header" value={activeTab} onValueChange={(value) => setActiveTab(value as PhotoType)}>
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="header">En-têtes ({headerPhotos.length})</TabsTrigger>
           <TabsTrigger value="background">Arrière-plans ({backgroundPhotos.length})</TabsTrigger>
+          <TabsTrigger value="signature">Signatures ({signaturePhotos.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="header" className="mt-4">
           {isLoading ? (
@@ -168,6 +170,15 @@ export function PhotosPage() {
             </div>
           ) : (
             <PhotoGrid photos={backgroundPhotos} onDelete={handleDeletePhoto} />
+          )}
+        </TabsContent>
+        <TabsContent value="signature" className="mt-4">
+          {isLoading ? (
+            <div className="flex justify-center items-center p-12">
+              <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <PhotoGrid photos={signaturePhotos} onDelete={handleDeletePhoto} />
           )}
         </TabsContent>
       </Tabs>

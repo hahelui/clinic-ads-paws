@@ -84,11 +84,24 @@ export const AdPreview = forwardRef<HTMLDivElement, AdPreviewProps>((
           )}
 
           {/* Contact info at the bottom left */}
-          {adData.contactInfo && (
-            <div className="mt-auto text-sm text-left pt-4">
-              {adData.contactInfo}
-            </div>
-          )}
+          <div className="mt-auto flex justify-between items-end pt-4">
+            {adData.contactInfo && (
+              <div className="text-sm text-left">
+                {adData.contactInfo}
+              </div>
+            )}
+            
+            {/* Signature/stamp at the bottom right */}
+            {adData.signature && (
+              <div className="ml-auto" style={{ width: `${width * 0.125}px` }}>
+                <img 
+                  src={adData.signature} 
+                  alt="Signature" 
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -107,7 +120,7 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
     
     // Set canvas dimensions with higher resolution
     const width = 1200
-    const height = 1600
+    const height = 1800
     canvas.width = width
     canvas.height = height
     
@@ -237,6 +250,22 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
       ctx.textAlign = 'left'
       const textPadding = 60 // 30px padding * 2 for higher resolution
       ctx.fillText(adData.contactInfo, textPadding, height - padding - 28)
+    }
+    
+    // Draw signature/stamp if exists
+    if (adData.signature) {
+      const signatureImg = await loadImage(adData.signature)
+      
+      // Calculate dimensions for signature (1/5 of width)
+      const signatureWidth = width * 0.2 // 1/5 of ad width
+      const signatureHeight = (signatureImg.height / signatureImg.width) * signatureWidth // Preserve aspect ratio
+      
+      // Position in bottom right with padding
+      const signatureX = width - signatureWidth - padding
+      const signatureY = height - signatureHeight - padding
+      
+      // Draw the signature
+      ctx.drawImage(signatureImg, signatureX, signatureY, signatureWidth, signatureHeight)
     }
     
     // Use higher quality settings for the PNG export

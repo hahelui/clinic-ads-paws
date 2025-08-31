@@ -121,7 +121,7 @@ export function UploadPhotoDialog({
               <RadioGroup
                 value={photoType}
                 onValueChange={(value: string) => setPhotoType(value as PhotoType)}
-                className="grid grid-cols-2 gap-4"
+                className="grid grid-cols-3 gap-4"
               >
                 <div className="flex items-center space-x-2 border rounded-md p-3">
                   <RadioGroupItem value="header" id="header" />
@@ -130,6 +130,10 @@ export function UploadPhotoDialog({
                 <div className="flex items-center space-x-2 border rounded-md p-3">
                   <RadioGroupItem value="background" id="background" />
                   <Label htmlFor="background" className="flex-1 cursor-pointer">Arrière-plan</Label>
+                </div>
+                <div className="flex items-center space-x-2 border rounded-md p-3">
+                  <RadioGroupItem value="signature" id="signature" />
+                  <Label htmlFor="signature" className="flex-1 cursor-pointer">Signature</Label>
                 </div>
               </RadioGroup>
             </div>

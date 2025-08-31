@@ -15,17 +15,21 @@ interface DesignStepProps {
 export function DesignStep({ formData, updateFormData }: DesignStepProps) {
   const [useHeader, setUseHeader] = useState(!!formData.header)
   const [useBackground, setUseBackground] = useState(!!formData.background)
+  const [useSignature, setUseSignature] = useState(!!formData.signature)
   const [useContactInfo, setUseContactInfo] = useState(!!formData.contactInfo)
   const [headerName, setHeaderName] = useState<string>("") 
   const [backgroundName, setBackgroundName] = useState<string>("") 
+  const [signatureName, setSignatureName] = useState<string>("") 
   const [isHeaderDialogOpen, setIsHeaderDialogOpen] = useState(false)
   const [isBackgroundDialogOpen, setIsBackgroundDialogOpen] = useState(false)
+  const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false)
 
   // Set initial names if editing an existing ad
   useEffect(() => {
     // Reset the state when form data changes
     setUseHeader(!!formData.header)
     setUseBackground(!!formData.background)
+    setUseSignature(!!formData.signature)
     setUseContactInfo(!!formData.contactInfo)
     
     if (formData.header) {
@@ -38,6 +42,12 @@ export function DesignStep({ formData, updateFormData }: DesignStepProps) {
       setBackgroundName("Image sélectionnée")
     } else {
       setBackgroundName("")
+    }
+    
+    if (formData.signature) {
+      setSignatureName("Image sélectionnée")
+    } else {
+      setSignatureName("")
     }
   }, [formData])
 
@@ -160,6 +170,66 @@ export function DesignStep({ formData, updateFormData }: DesignStepProps) {
           }}
           type="background"
           title="Sélectionner un arrière-plan"
+        />
+      </div>
+
+      {/* Signature/Stamp selection */}
+      <div className="border-b pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <Label htmlFor="use-signature">Utiliser une signature/tampon</Label>
+            <p className="text-sm text-muted-foreground">
+              Ajouter une signature ou un tampon à votre annonce
+            </p>
+          </div>
+          <Switch
+            id="use-signature"
+            checked={useSignature}
+            onCheckedChange={(checked) => {
+              setUseSignature(checked)
+              if (!checked) updateFormData({ signature: null })
+            }}
+          />
+        </div>
+
+        {useSignature && (
+          <div className="mt-4">
+            <div className="flex gap-4 items-center">
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => setIsSignatureDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Choisir une image
+              </Button>
+              
+              {formData.signature && (
+                <div className="flex items-center gap-2">
+                  <div className="border rounded-md overflow-hidden w-12 h-12">
+                    <img 
+                      src={formData.signature} 
+                      alt="Signature sélectionnée" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-sm">{signatureName}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        <ImageSelectionDialog
+          open={isSignatureDialogOpen}
+          onOpenChange={setIsSignatureDialogOpen}
+          onSelect={(imageUrl, imageName) => {
+            updateFormData({ signature: imageUrl })
+            setSignatureName(imageName)
+          }}
+          type="signature"
+          title="Sélectionner une signature ou un tampon"
         />
       </div>
 

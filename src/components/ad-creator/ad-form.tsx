@@ -31,6 +31,7 @@ export type AdFormData = {
   arabicText: string
   header: string | null
   background: string | null
+  signature: string | null
   contactInfo: string
   previewImage?: string | null
 }
@@ -48,6 +49,7 @@ export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
     arabicText: "",
     header: null,
     background: null,
+    signature: null,
     contactInfo: "",
   }
   
@@ -67,6 +69,7 @@ export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
         arabicText = "",
         header = null,
         background = null,
+        signature = null,
         contactInfo = "",
         previewImage = null
       } = initialData;
@@ -80,6 +83,7 @@ export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
         arabicText,
         header,
         background,
+        signature,
         contactInfo,
         previewImage
       });
@@ -127,6 +131,7 @@ export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
           arabicText: "",
           header: null,
           background: null,
+          signature: null,
           contactInfo: "",
           previewImage: null
         })

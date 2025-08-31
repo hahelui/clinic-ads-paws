@@ -18,9 +18,10 @@ export function FrenchTextStep({ formData, updateFormData }: FrenchTextStepProps
   // Generate French text when entering this step if AI is enabled and prompt exists
   useEffect(() => {
     if (formData.useAi && formData.aiPrompt && !formData.frenchText) {
+      console.log('French step: Initiating generation from prompt')
       generateFrenchText()
     }
-  }, [])
+  }, [formData.useAi, formData.aiPrompt, formData.frenchText])
 
   const generateFrenchText = async () => {
     if (!formData.aiPrompt) {
@@ -30,14 +31,28 @@ export function FrenchTextStep({ formData, updateFormData }: FrenchTextStepProps
 
     setIsGenerating(true)
     try {
-      let prompt = `Voici les détails d'une annonce pour une clinique vétérinaire: ${formData.aiPrompt}\n\nGénérer une version française professionnelle de cette annonce. Le texte doit être clair, concis et adapté à l'affichage public.`
+      let prompt = `Voici les détails d'une annonce: ${formData.aiPrompt}\n\nGénérer une version française professionnelle de cette annonce.`
       
+      console.log('Sending prompt to AI:', prompt)
       const response = await generateResponse(prompt, { temperature: 0.7 })
+      console.log('Received AI response')
+      
       const generatedText = extractResponseText(response)
+      console.log('Extracted text:', generatedText)
       
       if (generatedText) {
+        console.log('Updating form data with generated text')
         updateFormData({ frenchText: generatedText })
+        
+        // Verify the update happened
+        setTimeout(() => {
+          console.log('Form data after update:', formData.frenchText)
+          if (!formData.frenchText) {
+            console.warn('Form data not updated immediately - this is expected with React state')
+          }
+        }, 100)
       } else {
+        console.error('No text was extracted from the AI response')
         toast.error("Impossible de générer le texte. Veuillez réessayer.")
       }
     } catch (error) {

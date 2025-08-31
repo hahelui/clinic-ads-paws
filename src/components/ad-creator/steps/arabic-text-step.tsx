@@ -20,13 +20,15 @@ export function ArabicTextStep({ formData, updateFormData }: ArabicTextStepProps
     if (formData.useAi && !formData.arabicText) {
       if (formData.language === "both" && formData.frenchText) {
         // If both languages are selected and French text exists, translate from French
+        console.log('Arabic step: Initiating translation from French')
         generateArabicFromFrench()
       } else if (formData.aiPrompt) {
         // Otherwise generate from prompt
+        console.log('Arabic step: Initiating generation from prompt')
         generateArabicText()
       }
     }
-  }, [])
+  }, [formData.useAi, formData.arabicText, formData.language, formData.frenchText, formData.aiPrompt])
 
   const generateArabicText = async () => {
     if (!formData.aiPrompt) {
@@ -38,12 +40,26 @@ export function ArabicTextStep({ formData, updateFormData }: ArabicTextStepProps
     try {
       let prompt = `Voici les détails d'une annonce pour une clinique vétérinaire: ${formData.aiPrompt}\n\nGénérer une version arabe professionnelle de cette annonce. Le texte doit être clair, concis et adapté à l'affichage public.`
       
+      console.log('Arabic step: Sending prompt to AI:', prompt)
       const response = await generateResponse(prompt, { temperature: 0.7 })
+      console.log('Arabic step: Received AI response')
+      
       const generatedText = extractResponseText(response)
+      console.log('Arabic step: Extracted text:', generatedText)
       
       if (generatedText) {
+        console.log('Arabic step: Updating form data with generated text')
         updateFormData({ arabicText: generatedText })
+        
+        // Verify the update happened
+        setTimeout(() => {
+          console.log('Arabic step: Form data after update:', formData.arabicText)
+          if (!formData.arabicText) {
+            console.warn('Arabic step: Form data not updated immediately - this is expected with React state')
+          }
+        }, 100)
       } else {
+        console.error('Arabic step: No text was extracted from the AI response')
         toast.error("Impossible de générer le texte. Veuillez réessayer.")
       }
     } catch (error) {
@@ -64,12 +80,26 @@ export function ArabicTextStep({ formData, updateFormData }: ArabicTextStepProps
     try {
       let prompt = `Voici la version française approuvée d'une annonce pour une clinique vétérinaire:\n\n${formData.frenchText}\n\nVeuillez traduire ce texte en arabe de manière professionnelle et adaptée au contexte culturel. Assurez-vous que la traduction est fidèle au contenu original tout en étant naturelle en arabe.`
       
+      console.log('Arabic step: Sending translation prompt to AI:', prompt)
       const response = await generateResponse(prompt, { temperature: 0.7 })
+      console.log('Arabic step: Received translation response')
+      
       const generatedText = extractResponseText(response)
+      console.log('Arabic step: Extracted translation:', generatedText)
       
       if (generatedText) {
+        console.log('Arabic step: Updating form data with translated text')
         updateFormData({ arabicText: generatedText })
+        
+        // Verify the update happened
+        setTimeout(() => {
+          console.log('Arabic step: Form data after translation update:', formData.arabicText)
+          if (!formData.arabicText) {
+            console.warn('Arabic step: Form data not updated immediately - this is expected with React state')
+          }
+        }, 100)
       } else {
+        console.error('Arabic step: No translation was extracted from the AI response')
         toast.error("Impossible de générer la traduction. Veuillez réessayer.")
       }
     } catch (error) {

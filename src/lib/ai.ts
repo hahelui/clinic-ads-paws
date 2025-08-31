@@ -103,14 +103,21 @@ export async function generateResponse(
     ? `${settings.endpoint}responses` 
     : `${settings.endpoint}/responses`;
   
+  // Combine system prompt with user prompt if available
+  const combinedPrompt = settings.systemPrompt 
+    ? `${settings.systemPrompt}\n\n${prompt}` 
+    : prompt;
+    
   const requestBody = {
     model: settings.model,
-    input: prompt,
-    instructions: settings.systemPrompt || '',
+    input: combinedPrompt,
+    instructions: settings.systemPrompt || '', // Keep this for backward compatibility
     max_output_tokens: options.maxTokens || 1000,
     temperature: options.temperature || 0.7,
     stream: options.stream || false
   };
+  
+  console.log('Sending combined prompt:', combinedPrompt);
   
   try {
     const response = await fetch(endpoint, {
@@ -141,28 +148,64 @@ export async function generateResponse(
  */
 export function extractResponseText(response: AIResponse): string {
   try {
+    // Log the full response for debugging
+    console.log('Full AI response:', JSON.stringify(response, null, 2));
+    
     // Check if we have a valid response with output messages
     if (!response || !response.output || !Array.isArray(response.output)) {
       console.error('Invalid AI response format');
       return '';
     }
     
+    console.log('Response output array length:', response.output.length);
+    
     // Find the first message with content (typically the assistant's message)
     const message = response.output.find(msg => 
       msg && msg.role === 'assistant' && msg.content && Array.isArray(msg.content) && msg.content.length > 0
     );
     
-    if (!message || !message.content || message.content.length === 0) {
-      console.error('No valid message found in AI response');
+    if (!message) {
+      console.error('No assistant message found in AI response');
+      // Fallback: try to get any message with content
+      const anyMessage = response.output.find(msg => 
+        msg && msg.content && Array.isArray(msg.content) && msg.content.length > 0
+      );
+      
+      if (anyMessage) {
+        console.log('Found non-assistant message with content');
+        const textParts = anyMessage.content
+          .filter(part => (part.type === 'text' || part.type === 'output_text') && typeof part.text === 'string')
+          .map(part => part.text);
+        
+        if (textParts.length > 0) {
+          const result = textParts.join('\n');
+          console.log('Extracted text from non-assistant message:', result);
+          return result;
+        }
+      }
+      
       return '';
     }
     
+    console.log('Found assistant message, content length:', message.content.length);
+    
     // Extract text from all content parts
     const textParts = message.content
-      .filter(part => part.type === 'text' && typeof part.text === 'string')
+      .filter(part => {
+        // Accept both 'text' and 'output_text' types
+        const isValid = (part.type === 'text' || part.type === 'output_text') && typeof part.text === 'string';
+        if (!isValid) {
+          console.log('Skipping content part with type:', part.type);
+        }
+        return isValid;
+      })
       .map(part => part.text);
     
-    return textParts.join('\n');
+    console.log('Extracted text parts count:', textParts.length);
+    
+    const result = textParts.join('\n');
+    console.log('Final extracted text:', result);
+    return result;
   } catch (error) {
     console.error('Error extracting text from AI response:', error);
     return '';

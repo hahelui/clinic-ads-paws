@@ -23,7 +23,12 @@ interface ClinicAdsDB extends DBSchema {
   };
   ads: {
     key: string;
-    value: AdFormData & { id: string; createdAt: number; updatedAt: number };
+    value: AdFormData & { 
+      id: string; 
+      createdAt: number; 
+      updatedAt: number;
+      cachedPreview?: string; // Cached preview image as data URL
+    };
   };
   settings: {
     key: string;
@@ -32,7 +37,7 @@ interface ClinicAdsDB extends DBSchema {
 }
 
 // Database version
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 // Database name
 const DB_NAME = 'clinic-ads-db';
@@ -98,13 +103,14 @@ export async function saveAd(adData: AdFormData, existingId?: string): Promise<s
   let adWithMetadata;
   
   if (existingId) {
-    // If updating an existing ad, preserve the original createdAt timestamp
+    // If updating an existing ad, preserve the original createdAt timestamp and cachedPreview if exists
     const existingAd = await db.get('ads', existingId);
     adWithMetadata = {
       ...adData,
       id,
       createdAt: existingAd?.createdAt || timestamp,
       updatedAt: timestamp,
+      cachedPreview: existingAd?.cachedPreview, // Preserve cached preview if it exists
     };
   } else {
     // New ad
@@ -118,6 +124,17 @@ export async function saveAd(adData: AdFormData, existingId?: string): Promise<s
   
   await db.put('ads', adWithMetadata);
   return id;
+}
+
+// Save a cached preview for an ad
+export async function saveCachedPreview(adId: string, previewDataUrl: string): Promise<void> {
+  const db = await initDB();
+  const ad = await db.get('ads', adId);
+  
+  if (ad) {
+    ad.cachedPreview = previewDataUrl;
+    await db.put('ads', ad);
+  }
 }
 
 export async function getAd(id: string): Promise<(AdFormData & { id: string; createdAt: number; updatedAt: number }) | undefined> {

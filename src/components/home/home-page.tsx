@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { PlusIcon, EditIcon, DownloadIcon, Loader2Icon, TrashIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,7 @@ interface AdWithId extends AdFormData {
   id: string
   createdAt: number
   updatedAt: number
+  cachedPreview?: string
 }
 
 interface HomePageProps {
@@ -65,7 +66,13 @@ export function HomePage({ onCreateAd, onEditAd, onDeleteAd, refreshTrigger = 0 
       // Wait a bit for the preview to render
       setTimeout(async () => {
         try {
-          await downloadAdImage(ad)
+          // Pass a refresh callback to update the UI after caching the preview
+          await downloadAdImage(ad, () => {
+            // Trigger a refresh of the ads list to show updated preview
+            if (onDeleteAd && refreshTrigger !== undefined) {
+              onDeleteAd(ad.id) // Reuse onDeleteAd as it calls refreshAdData
+            }
+          })
           toast.success("Image téléchargée avec succès")
         } catch (error) {
           console.error("Failed to download image:", error)
@@ -177,78 +184,77 @@ export function HomePage({ onCreateAd, onEditAd, onDeleteAd, refreshTrigger = 0 
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {ads.map((ad) => (
-            <Card key={ad.id} className="overflow-hidden">
-              <div className="relative h-40 bg-muted">
-                {ad.header && (
+            <Card key={ad.id} className="overflow-hidden flex flex-col">
+              {/* Image container with 2:3 aspect ratio */}
+              <div className="relative bg-muted aspect-[2/3] w-full">
+                {/* Use cached preview if available, otherwise fall back to header image */}
+                {(ad.cachedPreview || ad.header) && (
                   <img
-                    src={ad.header}
-                    alt={ad.title}
+                    src={ad.cachedPreview || ad.header || ''}
+                    alt={ad.title || ''}
                     className="w-full h-full object-cover"
                   />
                 )}
               </div>
-              <CardHeader>
-                <CardTitle>{ad.title || "Annonce sans titre"}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(ad.createdAt).toLocaleDateString()}
-                </p>
-                <div className="mt-2">
-                  <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+              
+              {/* Compact info section */}
+              <div className="pl-3 pr-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-sm truncate">{ad.title || "Annonce sans titre"}</h3>
+                  <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
                     {ad.language === "both" 
-                      ? "Français & Arabe" 
+                      ? "FR/AR" 
                       : ad.language === "french" 
-                        ? "Français" 
-                        : "Arabe"}
+                        ? "FR" 
+                        : "AR"}
                   </span>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-between gap-2">
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleEdit(ad)}
-                    className="flex items-center gap-1"
-                  >
-                    <EditIcon className="h-3 w-3" />
-                    Modifier
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => handleDeleteClick(ad)}
-                    disabled={deletingId === ad.id}
-                    className="flex items-center gap-1"
-                  >
-                    {deletingId === ad.id ? (
-                      <Loader2Icon className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <TrashIcon className="h-3 w-3" />
-                    )}
-                  </Button>
-                </div>
-                <Button 
-                  variant="secondary" 
-                  size="sm"
-                  onClick={() => handleDownload(ad)}
-                  disabled={downloadingId === ad.id}
-                  className="flex items-center gap-1"
-                >
-                  {downloadingId === ad.id ? (
-                    <>
-                      <Loader2Icon className="h-3 w-3 animate-spin" />
-                      Téléchargement...
-                    </>
-                  ) : (
-                    <>
-                      <DownloadIcon className="h-3 w-3" />
+                
+                {/* Action buttons */}
+                <div className="flex items-center justify-between mt-2">
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(ad.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-25"
+                      onClick={() => handleEdit(ad)}
+                    >
+                      <EditIcon className="h-4 w-4" />
+                      Modifier
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-10 text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteClick(ad)}
+                      disabled={deletingId === ad.id}
+                    >
+                      {deletingId === ad.id ? (
+                        <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <TrashIcon className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-7 w-30 text-primary hover:text-primary"
+                      onClick={() => handleDownload(ad)}
+                      disabled={downloadingId === ad.id}
+                    >
+                      {downloadingId === ad.id ? (
+                        <Loader2Icon className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <DownloadIcon className="h-3.5 w-3.5" />
+                      )}
                       Télécharger
-                    </>
-                  )}
-                </Button>
-              </CardFooter>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </Card>
           ))}
         </div>

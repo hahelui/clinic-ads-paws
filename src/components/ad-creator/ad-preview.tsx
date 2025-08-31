@@ -1,5 +1,6 @@
 import { forwardRef, useRef } from 'react'
 import type { AdFormData } from './ad-form'
+import { saveCachedPreview } from '@/lib/storage'
 
 interface AdPreviewProps {
   adData: Partial<AdFormData>
@@ -109,7 +110,7 @@ export const AdPreview = forwardRef<HTMLDivElement, AdPreviewProps>((
 })
 
 // Function to generate an image from the ad preview using pure canvas rendering
-export async function generateAdImage(adData: AdFormData): Promise<string> {
+export async function generateAdImage(adData: AdFormData & { id?: string }, saveToCache: boolean = false, refreshCallback?: () => void): Promise<string> {
   try {
     // Create a high-resolution canvas element
     const canvas = document.createElement('canvas')
@@ -269,7 +270,22 @@ export async function generateAdImage(adData: AdFormData): Promise<string> {
     }
     
     // Use higher quality settings for the PNG export
-    return canvas.toDataURL('image/png', 1.0)
+    const dataUrl = canvas.toDataURL('image/png', 1.0)
+    
+    // Save to cache if requested and we have an ID
+    if (saveToCache && adData.id) {
+      try {
+        await saveCachedPreview(adData.id, dataUrl)
+        // Call refresh callback if provided
+        if (refreshCallback) {
+          refreshCallback()
+        }
+      } catch (cacheError) {
+        console.error("Error saving preview to cache:", cacheError)
+      }
+    }
+    
+    return dataUrl
   } catch (error) {
     console.error("Error generating image:", error)
     return adData.header || 'placeholder-image-url'
@@ -363,9 +379,10 @@ function wrapRTLText(ctx: CanvasRenderingContext2D, text: string, maxWidth: numb
 
 
 // Function to download the generated image
-export async function downloadAdImage(adData: AdFormData): Promise<void> {
+export async function downloadAdImage(adData: AdFormData & { id?: string }, refreshCallback?: () => void): Promise<void> {
   try {
-    const imageUrl = await generateAdImage(adData)
+    // Generate the image and save to cache if the ad has an ID
+    const imageUrl = await generateAdImage(adData, !!adData.id, refreshCallback)
     
     // Create a temporary link element
     const link = document.createElement('a')

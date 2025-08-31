@@ -19,28 +19,28 @@ export function PhotoGrid({ photos, onDelete }: PhotoGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 max-w-7xl mx-auto">
       {photos.map((photo) => (
         <Card key={photo.id} className="overflow-hidden">
           <CardContent className="p-0">
-            <div className="relative aspect-[4/3] w-full overflow-hidden">
+            <div className="relative aspect-square sm:aspect-[4/3] md:aspect-[4/3] lg:aspect-[3/2] w-full overflow-hidden flex items-center justify-center bg-muted/10">
               <img
                 src={photo.url}
                 alt={photo.name}
-                className="object-cover w-full h-full transition-transform hover:scale-105"
+                className="max-w-full max-h-full object-contain w-auto h-auto transition-transform hover:scale-105"
               />
             </div>
           </CardContent>
-          <CardFooter className="flex items-center justify-between p-3">
-            <p className="text-sm font-medium truncate">{photo.name}</p>
+          <CardFooter className="flex items-center justify-between p-2 sm:p-3 md:p-4">
+            <p className="text-xs sm:text-sm md:text-base font-medium truncate max-w-[70%]">{photo.name}</p>
             {onDelete && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-destructive"
+                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-destructive"
                 onClick={() => onDelete(photo.id)}
               >
-                <Trash2Icon className="h-4 w-4" />
+                <Trash2Icon className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span className="sr-only">Supprimer</span>
               </Button>
             )}

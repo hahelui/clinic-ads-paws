@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { AdForm } from "@/components/ad-creator/ad-form"
 import { getAd } from "@/lib/storage"
 import type { AdFormData } from "@/components/ad-creator/ad-form"
+import { generateAdImage } from "@/components/ad-creator/ad-preview"
 import { HomePage } from "@/components/home/home-page"
 import { Navigation } from "@/components/navigation"
 import { PhotosPage } from "@/components/photos/photos-page"
@@ -111,11 +112,22 @@ function App() {
                       ) : (
                         <AdForm 
                           initialData={adFormData} 
-                          onSaveSuccess={() => {
-                            // Refresh ad data after saving
-                            refreshAdData()
-                            setShowAdCreator(false)
-                            setCurrentAdId(null)
+                          onSaveSuccess={async (adId) => {
+                            try {
+                              // Get the saved ad data
+                              const savedAd = await getAd(adId)
+                              if (savedAd) {
+                                // Generate and cache a preview image with refresh callback
+                                await generateAdImage(savedAd, true, refreshAdData)
+                              }
+                            } catch (error) {
+                              console.error("Error generating preview:", error)
+                            } finally {
+                              // Refresh ad data after saving
+                              refreshAdData()
+                              setShowAdCreator(false)
+                              setCurrentAdId(null)
+                            }
                           }} 
                         />
                       )}

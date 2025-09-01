@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
-import { Loader2Icon, SaveIcon, DownloadIcon, UploadIcon, TrashIcon } from "lucide-react"
+import { Loader2Icon, SaveIcon, DownloadIcon, UploadIcon, TrashIcon, Moon, Sun, Laptop } from "lucide-react"
 import { getSettings, saveSettings, exportData, importData } from "@/lib/storage"
 import { Combobox } from "@/components/ui/combobox"
 import type { ComboboxItem } from "@/components/ui/combobox"
@@ -13,8 +13,10 @@ import { fetchModels } from "@/lib/ai"
 import type { AIModel } from "@/lib/ai"
 import type { AppSettings } from "@/lib/storage"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { useTheme } from "@/components/theme-provider"
 
 export function SettingsPage() {
+  const { theme, setTheme } = useTheme()
   const [settings, setSettings] = useState<AppSettings>({
     apiKey: "",
     endpoint: "",
@@ -435,6 +437,48 @@ export function SettingsPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Apparence</CardTitle>
+          <CardDescription>
+            Personnalisez l'apparence de l'application.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Thème</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Button
+                  variant={theme === "light" ? "default" : "outline"}
+                  className="justify-start px-3"
+                  onClick={() => setTheme("light")}
+                >
+                  <Sun className="mr-2 h-4 w-4" />
+                  Clair
+                </Button>
+                <Button
+                  variant={theme === "dark" ? "default" : "outline"}
+                  className="justify-start px-3"
+                  onClick={() => setTheme("dark")}
+                >
+                  <Moon className="mr-2 h-4 w-4" />
+                  Sombre
+                </Button>
+                <Button
+                  variant={theme === "system" ? "default" : "outline"}
+                  className="justify-start px-3"
+                  onClick={() => setTheme("system")}
+                >
+                  <Laptop className="mr-2 h-4 w-4" />
+                  Système
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

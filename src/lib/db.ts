@@ -96,7 +96,7 @@ export class PAWSDB extends Dexie {
   settings!: Table<Settings>
 
   constructor() {
-    super('paws-db')
+    super('create-ads-db')
     this.version(1).stores({
       blobs: '&id',
       assets: '&id, type, updatedAt',

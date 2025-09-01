@@ -53,21 +53,21 @@ export function ImageSelectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         
         {isLoading ? (
-          <div className="flex justify-center items-center p-12">
+          <div className="flex justify-center items-center p-12 flex-1">
             <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : images.length === 0 ? (
-          <div className="text-center p-6 text-muted-foreground">
+          <div className="text-center p-6 text-muted-foreground flex-1">
             Aucune image disponible. Veuillez ajouter des images dans la section Photos.
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4 py-4">
+          <div className="grid grid-cols-3 gap-4 py-4 overflow-y-auto flex-1">
             {images.map((image) => (
               <div 
                 key={image.id} 

@@ -2,6 +2,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Trash2Icon } from "lucide-react"
 import type { Photo } from "./photos-page"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { useState } from "react"
 
 interface PhotoGridProps {
   photos: Photo[]
@@ -9,6 +11,14 @@ interface PhotoGridProps {
 }
 
 export function PhotoGrid({ photos, onDelete }: PhotoGridProps) {
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
+  
+  const handleDeleteConfirm = () => {
+    if (photoToDelete && onDelete) {
+      onDelete(photoToDelete);
+      setPhotoToDelete(null);
+    }
+  };
   if (photos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center border rounded-lg bg-muted/20">
@@ -34,15 +44,33 @@ export function PhotoGrid({ photos, onDelete }: PhotoGridProps) {
           <CardFooter className="flex items-center justify-between p-2 sm:p-3 md:p-4">
             <p className="text-xs sm:text-sm md:text-base font-medium truncate max-w-[70%]">{photo.name}</p>
             {onDelete && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-destructive"
-                onClick={() => onDelete(photo.id)}
-              >
-                <Trash2Icon className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="sr-only">Supprimer</span>
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-destructive"
+                    onClick={() => setPhotoToDelete(photo.id)}
+                  >
+                    <Trash2Icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="sr-only">Supprimer</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cette action ne peut pas être annulée. Cette photo sera définitivement supprimée.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setPhotoToDelete(null)}>Annuler</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Supprimer
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </CardFooter>
         </Card>

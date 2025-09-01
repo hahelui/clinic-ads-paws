@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { PlusIcon, Loader2Icon } from "lucide-react"
 import { PhotoGrid } from "./photo-grid"
 import { UploadPhotoDialog } from "./upload-photo-dialog"
-import { getAllPhotos, getPhotosByType, savePhoto, deletePhoto } from "@/lib/storage"
+import { getAllPhotos, savePhoto, deletePhoto } from "@/lib/storage"
 
 export type PhotoType = "header" | "background" | "signature"
 
@@ -15,42 +15,8 @@ export interface Photo {
   type: PhotoType
 }
 
-// Initial seed data - we'll use this to populate the database if it's empty
-const seedPhotos: Photo[] = [
-  {
-    id: "header1",
-    name: "En-tête standard",
-    url: "https://placehold.co/600x200/e2e8f0/1e293b?text=En-tête+Standard",
-    type: "header"
-  },
-  {
-    id: "header2",
-    name: "En-tête moderne",
-    url: "https://placehold.co/600x200/e2e8f0/1e293b?text=En-tête+Moderne",
-    type: "header"
-  },
-  {
-    id: "bg1",
-    name: "Fond blanc",
-    url: "https://placehold.co/600x400/ffffff/cccccc?text=Fond+Blanc",
-    type: "background"
-  },
-  {
-    id: "bg2",
-    name: "Fond bleu clair",
-    url: "https://placehold.co/600x400/e6f7ff/0077cc?text=Fond+Bleu+Clair",
-    type: "background"
-  },
-  {
-    id: "bg3",
-    name: "Fond motif médical",
-    url: "https://placehold.co/600x400/f0f9ff/1e293b?text=Motif+Médical",
-    type: "background"
-  }
-]
-
 export function PhotosPage() {
-  const [photos, setPhotos] = useState<Photo[]>([])
+  const [allPhotos, setAllPhotos] = useState<Photo[]>([])
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<PhotoType>("header")
   const [isLoading, setIsLoading] = useState(true)
@@ -61,15 +27,7 @@ export function PhotosPage() {
       try {
         setIsLoading(true)
         const storedPhotos = await getAllPhotos()
-        
-        // If no photos in database, seed with initial data
-        if (storedPhotos.length === 0) {
-          // Save seed photos to IndexedDB
-          await Promise.all(seedPhotos.map(photo => savePhoto(photo)))
-          setPhotos(seedPhotos)
-        } else {
-          setPhotos(storedPhotos)
-        }
+        setAllPhotos(storedPhotos)
       } catch (error) {
         console.error('Failed to load photos:', error)
       } finally {
@@ -92,7 +50,7 @@ export function PhotosPage() {
       await savePhoto(newPhoto)
       
       // Update state
-      setPhotos([...photos, newPhoto])
+      setAllPhotos([...allPhotos, newPhoto])
       setIsUploadDialogOpen(false)
     } catch (error) {
       console.error('Failed to save photo:', error)
@@ -107,33 +65,22 @@ export function PhotosPage() {
       await deletePhoto(id)
       
       // Update state
-      setPhotos(photos.filter(photo => photo.id !== id))
+      setAllPhotos(allPhotos.filter((photo: Photo) => photo.id !== id))
     } catch (error) {
       console.error('Failed to delete photo:', error)
       alert('Failed to delete photo. Please try again.')
     }
   }
 
-  // Filter photos by type based on active tab
-  useEffect(() => {
-    const loadPhotosByType = async () => {
-      try {
-        setIsLoading(true)
-        const filteredPhotos = await getPhotosByType(activeTab)
-        setPhotos(filteredPhotos)
-      } catch (error) {
-        console.error(`Failed to load ${activeTab} photos:`, error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    
-    loadPhotosByType()
-  }, [activeTab])
+  // No need to reload photos from database when changing tabs
+  // We'll just filter the photos we already have in memory
   
-  const headerPhotos = photos.filter(photo => photo.type === "header")
-  const backgroundPhotos = photos.filter(photo => photo.type === "background")
-  const signaturePhotos = photos.filter(photo => photo.type === "signature")
+  const headerPhotos = allPhotos.filter((photo: Photo) => photo.type === "header")
+  const backgroundPhotos = allPhotos.filter((photo: Photo) => photo.type === "background")
+  const signaturePhotos = allPhotos.filter((photo: Photo) => photo.type === "signature")
+  
+  // Get the photos for the current active tab
+  const currentTabPhotos = allPhotos.filter((photo: Photo) => photo.type === activeTab)
 
   return (
     <div className="w-full space-y-6">
@@ -160,7 +107,7 @@ export function PhotosPage() {
               <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <PhotoGrid photos={headerPhotos} onDelete={handleDeletePhoto} />
+            <PhotoGrid photos={currentTabPhotos} onDelete={handleDeletePhoto} />
           )}
         </TabsContent>
         <TabsContent value="background" className="mt-4">
@@ -169,7 +116,7 @@ export function PhotosPage() {
               <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <PhotoGrid photos={backgroundPhotos} onDelete={handleDeletePhoto} />
+            <PhotoGrid photos={currentTabPhotos} onDelete={handleDeletePhoto} />
           )}
         </TabsContent>
         <TabsContent value="signature" className="mt-4">
@@ -178,7 +125,7 @@ export function PhotosPage() {
               <Loader2Icon className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <PhotoGrid photos={signaturePhotos} onDelete={handleDeletePhoto} />
+            <PhotoGrid photos={currentTabPhotos} onDelete={handleDeletePhoto} />
           )}
         </TabsContent>
       </Tabs>

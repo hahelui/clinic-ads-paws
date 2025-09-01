@@ -10,7 +10,7 @@ import { HomePage } from "@/components/home/home-page"
 import { Navigation } from "@/components/navigation"
 import { PhotosPage } from "@/components/photos/photos-page"
 import { SettingsPage } from "@/components/settings/settings-page"
-import { Button } from "@/components/ui/button"
+// Button import removed as it's no longer needed
 import {
   SidebarProvider,
   Sidebar,
@@ -90,50 +90,36 @@ function App() {
             </header>
             <main className="flex-1 overflow-auto p-4">
               <div className="mx-auto max-w-5xl xl:max-w-7xl 2xl:max-w-full">
-                {showAdCreator ? (
-                  <div className="bg-white rounded-lg shadow">
-                    <div className="border-b p-4 flex items-center justify-between">
-                      <h2 className="text-xl font-semibold">
-                        {currentAdId ? "Modifier l'annonce" : "Créer une nouvelle annonce"}
-                      </h2>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => setShowAdCreator(false)}
-                      >
-                        Annuler
-                      </Button>
-                    </div>
-                    <div className="p-6">
-                      {isLoadingAdData ? (
-                        <div className="flex items-center justify-center h-full">
-                          <Loader2Icon className="h-8 w-8 animate-spin" />
-                        </div>
-                      ) : (
-                        <AdForm 
-                          initialData={adFormData} 
-                          onSaveSuccess={async (adId) => {
-                            try {
-                              // Get the saved ad data
-                              const savedAd = await getAd(adId)
-                              if (savedAd) {
-                                // Generate and cache a preview image with refresh callback
-                                await generateAdImage(savedAd, true, refreshAdData)
-                              }
-                            } catch (error) {
-                              console.error("Error generating preview:", error)
-                            } finally {
-                              // Refresh ad data after saving
-                              refreshAdData()
-                              setShowAdCreator(false)
-                              setCurrentAdId(null)
-                            }
-                          }} 
-                        />
-                      )}
-                    </div>
+                {isLoadingAdData ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2Icon className="h-8 w-8 animate-spin" />
                   </div>
-                ) : activePage === "photos" ? (
+                ) : (
+                  <AdForm 
+                    initialData={adFormData} 
+                    open={showAdCreator}
+                    onOpenChange={setShowAdCreator}
+                    onSaveSuccess={async (adId) => {
+                      try {
+                        // Get the saved ad data
+                        const savedAd = await getAd(adId)
+                        if (savedAd) {
+                          // Generate and cache a preview image with refresh callback
+                          await generateAdImage(savedAd, true, refreshAdData)
+                        }
+                      } catch (error) {
+                        console.error("Error generating preview:", error)
+                      } finally {
+                        // Refresh ad data after saving
+                        refreshAdData()
+                        setShowAdCreator(false)
+                        setCurrentAdId(null)
+                      }
+                    }} 
+                  />
+                )}
+                
+                {activePage === "photos" ? (
                   <PhotosPage />
                 ) : activePage === "settings" ? (
                   <SettingsPage />

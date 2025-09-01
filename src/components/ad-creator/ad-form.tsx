@@ -11,6 +11,13 @@ import {
   StepperSeparator,
 } from "@/components/ui/stepper"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { LanguageStep } from "./steps/language-step"
 import { AiPromptStep } from "./steps/ai-prompt-step"
 import { FrenchTextStep } from "./steps/french-text-step"
@@ -20,6 +27,8 @@ import { DesignStep } from "./steps/design-step"
 export interface AdFormProps {
   initialData?: AdFormData & { id?: string } | null
   onSaveSuccess?: (adId: string) => void
+  open: boolean
+  onOpenChange: (open: boolean) => void
 }
 
 export type AdFormData = {
@@ -36,7 +45,7 @@ export type AdFormData = {
   previewImage?: string | null
 }
 
-export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
+export function AdForm({ initialData, onSaveSuccess, open, onOpenChange }: AdFormProps) {
   const [currentStep, setCurrentStep] = useState(0)
   
   // Default form data
@@ -200,51 +209,72 @@ export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
   const activeSteps = steps.filter((step) => !step.skip)
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      <Stepper
-        value={currentStep}
-        onValueChange={setCurrentStep}
-        className="mb-8"
-      >
-        {activeSteps.map((_, index) => (
-          <React.Fragment key={index}>
-            <StepperItem step={index}>
-              <StepperTrigger>
-                <StepperIndicator />
-              </StepperTrigger>
-            </StepperItem>
-            {index < activeSteps.length - 1 && <StepperSeparator />}
-          </React.Fragment>
-        ))}
-      </Stepper>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>
+            {initialData ? "Modifier l'annonce" : "Créer une nouvelle annonce"}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="w-full max-w-3xl mx-auto py-4">
+          <Stepper
+            value={currentStep}
+            onValueChange={setCurrentStep}
+            className="mb-8"
+          >
+            {activeSteps.map((_, index) => (
+              <React.Fragment key={index}>
+                <StepperItem step={index}>
+                  <StepperTrigger>
+                    <StepperIndicator />
+                  </StepperTrigger>
+                </StepperItem>
+                {index < activeSteps.length - 1 && <StepperSeparator />}
+              </React.Fragment>
+            ))}
+          </Stepper>
 
-      <div className="mb-6">
-        <div>
-          {activeSteps[currentStep]?.component}
+          <div className="mb-6">
+            <div>
+              {activeSteps[currentStep]?.component}
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={currentStep === 0}
-        >
-          Précédent
-        </Button>
-        <div className="flex gap-2">
-          {currentStep === activeSteps.length - 1 ? (
+        
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-between gap-4">
+          <div className="flex justify-center sm:justify-start">
             <Button
-              onClick={handleSubmit}
-              disabled={isSaving}
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 0}
+              className="w-full sm:w-auto"
             >
-              {isSaving ? "Enregistrement..." : initialData ? "Mettre à jour" : "Enregistrer"}
+              Précédent
             </Button>
-          ) : (
-            <Button onClick={handleNext}>Suivant</Button>
-          )}
-        </div>
-      </div>
-    </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto"
+            >
+              Annuler
+            </Button>
+            {currentStep === activeSteps.length - 1 ? (
+              <Button
+                onClick={handleSubmit}
+                disabled={isSaving}
+                className="w-full sm:w-auto"
+              >
+                {isSaving ? "Enregistrement..." : initialData ? "Mettre à jour" : "Enregistrer"}
+              </Button>
+            ) : (
+              <Button onClick={handleNext} className="w-full sm:w-auto">Suivant</Button>
+            )}
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

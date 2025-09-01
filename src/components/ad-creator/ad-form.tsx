@@ -219,7 +219,7 @@ export function AdForm({ initialData, onSaveSuccess }: AdFormProps) {
       </Stepper>
 
       <div className="mb-6">
-        <div className="border rounded-lg p-6">
+        <div>
           {activeSteps[currentStep]?.component}
         </div>
       </div>

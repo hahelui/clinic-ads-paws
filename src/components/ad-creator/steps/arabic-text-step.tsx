@@ -38,7 +38,7 @@ export function ArabicTextStep({ formData, updateFormData }: ArabicTextStepProps
 
     setIsGenerating(true)
     try {
-      let prompt = `Voici les détails d'une annonce pour une clinique vétérinaire: ${formData.aiPrompt}\n\nGénérer une version arabe professionnelle de cette annonce. Le texte doit être clair, concis et adapté à l'affichage public.`
+      let prompt = `Voici les détails d'une annonce: ${formData.aiPrompt}\n\nGénérer une version arabe professionnelle de cette annonce. Le texte doit être clair, concis et adapté à l'affichage public.`
       
       console.log('Arabic step: Sending prompt to AI:', prompt)
       const response = await generateResponse(prompt, { temperature: 0.7 })
@@ -78,7 +78,7 @@ export function ArabicTextStep({ formData, updateFormData }: ArabicTextStepProps
 
     setIsGenerating(true)
     try {
-      let prompt = `Voici la version française approuvée d'une annonce pour une clinique vétérinaire:\n\n${formData.frenchText}\n\nVeuillez traduire ce texte en arabe de manière professionnelle et adaptée au contexte culturel. Assurez-vous que la traduction est fidèle au contenu original tout en étant naturelle en arabe.`
+      let prompt = `Voici la version française approuvée d'une annonce :\n\n${formData.frenchText}\n\nVeuillez traduire ce texte en arabe de manière professionnelle et adaptée au contexte culturel. Assurez-vous que la traduction est fidèle au contenu original tout en étant naturelle en arabe.`
       
       console.log('Arabic step: Sending translation prompt to AI:', prompt)
       const response = await generateResponse(prompt, { temperature: 0.7 })
@@ -164,7 +164,7 @@ export function ArabicTextStep({ formData, updateFormData }: ArabicTextStepProps
             placeholder="أدخل نص الإعلان بالعربية"
             value={formData.arabicText}
             onChange={(e) => updateFormData({ arabicText: e.target.value })}
-            className="min-h-[200px] text-right"
+            className="min-h-[400px] text-right"
             dir="rtl"
           />
         )}

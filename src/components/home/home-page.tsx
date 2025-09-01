@@ -139,7 +139,7 @@ export function HomePage({ onCreateAd, onEditAd, onDeleteAd, refreshTrigger = 0 
   }
 
   return (
-    <div className="container py-6">
+    <div className="w-full py-6">
       {/* Delete confirmation dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

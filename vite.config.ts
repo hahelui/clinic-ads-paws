@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'PAWS Ads',
-        short_name: 'PAWS',
+        name: 'Create Ads',
+        short_name: 'Create Ads',
         description: 'Offline-first PWA for generating Ads (images/PDFs).',
         theme_color: '#111111',
         background_color: '#ffffff',

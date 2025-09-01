@@ -1,5 +1,5 @@
 // App.tsx - Main application layout with sidebar
-import { Loader2Icon, PawPrintIcon } from "lucide-react"
+import { Loader2Icon, Newspaper } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { AdForm } from "@/components/ad-creator/ad-form"
@@ -67,7 +67,7 @@ function App() {
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center gap-2 px-2">
-              <PawPrintIcon className="h-6 w-6" />
+              <Newspaper className="h-6 w-6" />
               <span className="font-semibold">Create Ads</span>
             </div>
           </SidebarHeader>
@@ -89,7 +89,7 @@ function App() {
               </div>
             </header>
             <main className="flex-1 overflow-auto p-4">
-              <div className="mx-auto max-w-5xl">
+              <div className="mx-auto max-w-5xl xl:max-w-7xl 2xl:max-w-full">
                 {showAdCreator ? (
                   <div className="bg-white rounded-lg shadow">
                     <div className="border-b p-4 flex items-center justify-between">

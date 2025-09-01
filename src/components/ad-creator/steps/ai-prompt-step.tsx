@@ -23,7 +23,7 @@ export function AiPromptStep({ formData, updateFormData }: AiPromptStepProps) {
             placeholder="Ex: Annonce pour une journée portes ouvertes à la clinique le 15 septembre 2025. Consultations gratuites de 9h à 17h. Dr. Martin et Dr. Ahmed seront présents."
             value={formData.aiPrompt}
             onChange={(e) => updateFormData({ aiPrompt: e.target.value })}
-            className="min-h-[200px]"
+            className="min-h-[400px]"
           />
         </div>
       </div>

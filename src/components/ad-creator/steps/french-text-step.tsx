@@ -109,7 +109,7 @@ export function FrenchTextStep({ formData, updateFormData }: FrenchTextStepProps
             placeholder="Entrez le texte de votre annonce en français"
             value={formData.frenchText}
             onChange={(e) => updateFormData({ frenchText: e.target.value })}
-            className="min-h-[200px]"
+            className="min-h-[400px]"
           />
         )}
       </div>

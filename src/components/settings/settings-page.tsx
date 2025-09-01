@@ -237,7 +237,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="w-full py-8 space-y-8">
       <div>
         <h1 className="text-3xl font-bold">Paramètres</h1>
         <p className="text-muted-foreground">

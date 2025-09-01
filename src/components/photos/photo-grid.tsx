@@ -19,7 +19,7 @@ export function PhotoGrid({ photos, onDelete }: PhotoGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 max-w-7xl mx-auto">
+    <div className="grid grid-cols-2 gap-2 sm:gap-4 md:gap-6 lg:gap-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 w-full">
       {photos.map((photo) => (
         <Card key={photo.id} className="overflow-hidden">
           <CardContent className="p-0">

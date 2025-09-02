@@ -48,6 +48,13 @@ export type AdFormData = {
 export function AdForm({ initialData, onSaveSuccess, open, onOpenChange }: AdFormProps) {
   const [currentStep, setCurrentStep] = useState(0)
   
+  // Reset form state when dialog is closed
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep(0)
+    }
+  }, [open])
+  
   // Default form data
   const defaultFormData: AdFormData = {
     title: "",
@@ -62,13 +69,14 @@ export function AdForm({ initialData, onSaveSuccess, open, onOpenChange }: AdFor
     contactInfo: "",
   }
   
-  // Initialize with default form data
+  // Initialize form data state
   const [formData, setFormData] = useState<AdFormData>(defaultFormData)
   
-  // Update form data when initialData changes
+  // Reset form and update data when dialog opens/closes or initialData changes
   useEffect(() => {
-    if (initialData) {
-      // Make sure to extract only the properties we need for AdFormData
+    // When dialog opens with initialData, set the form data
+    if (open && initialData) {
+      // Extract only the properties we need for AdFormData
       const {
         title = "",
         language = "both",
@@ -96,10 +104,12 @@ export function AdForm({ initialData, onSaveSuccess, open, onOpenChange }: AdFor
         contactInfo,
         previewImage
       });
-    } else {
+    } 
+    // When dialog opens without initialData, reset to default
+    else if (open && !initialData) {
       setFormData(defaultFormData);
     }
-  }, [initialData])
+  }, [open, initialData])
 
   const updateFormData = (data: Partial<AdFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))

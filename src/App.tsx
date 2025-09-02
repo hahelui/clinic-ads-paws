@@ -98,7 +98,14 @@ function App() {
                   <AdForm 
                     initialData={adFormData} 
                     open={showAdCreator}
-                    onOpenChange={setShowAdCreator}
+                    onOpenChange={(open) => {
+                      setShowAdCreator(open);
+                      // Reset form data when dialog is closed
+                      if (!open) {
+                        setCurrentAdId(null);
+                        setAdFormData(null);
+                      }
+                    }}
                     onSaveSuccess={async (adId) => {
                       try {
                         // Get the saved ad data
